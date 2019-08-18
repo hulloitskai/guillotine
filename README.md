@@ -34,16 +34,18 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/cockroachdb/errors"
 	"go.stevenxie.me/guillotine"
 )
 
 func main() {
-	// Create guillotine.
+	// Create a guillotine, configure it to trigger when receiving a termination
+	// signal from the OS.
 	guillo := guillotine.New()
+	guillo.TriggerOnTerminate()
 
 	// Execute the guillotine before main finishes.
 	defer func() {
-		fmt.Println("Executing guillotine...")
 		if errs := guillo.Execute(); len(errs) > 0 {
 			for _, err := range errs {
 				fmt.Fprintf(os.Stderr, "A finalizer failed: %v", err)
@@ -72,21 +74,23 @@ func main() {
 			}
 		}),
 	}
-	go func() {
-		fmt.Printf("Listening on port %d...\n", port)
-		if err := srv.ListenAndServe(); err != nil {
-			guillo.Trigger()
-		}
-	}()
 	guillo.AddFinalizer(
 		func() error { return srv.Shutdown(context.Background()) },
 		guillotine.WithPrefix("shutting down server"),
 	)
 
-	// Listen for an termination signal.
-	guillo.TriggerOnTerminate()
+	// Blocks thread while server runs; stops either when the Guillotine
+	// shuts down the server, or the server fails to start up.
+	fmt.Printf("Listening on port %d...\n", port)
+	if err := srv.ListenAndServe(); err != nil {
+		if !errors.Is(err, http.ErrServerClosed) {
+			cmdutil.Errf("Error while starting server: %v", err)
+		}
+	}
 }
 ```
+
+See [the full example](./example/main.go) for more details.
 
 [tag]: https://github.com/stevenxie/gopkg/releases
 [tag-img]: https://img.shields.io/github/tag/stevenxie/gopkg.svg

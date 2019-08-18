@@ -1,6 +1,7 @@
 package guillotine
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,28 +31,31 @@ func (g *Guillotine) TriggerOnTerminate() {
 // TriggerOnSignal waits for a signal before triggering an execution
 // (see g.Terminate).
 func (g *Guillotine) TriggerOnSignal(sig ...os.Signal) {
-	ch := make(chan os.Signal)
-	go signal.Notify(ch, sig...)
+	sigs := make(chan os.Signal)
+	go signal.Notify(sigs, sig...)
 
-	// Wait for signal (or cancellation).
-	select {
-	case <-g.ctx.Done(): // abort
-		return
-	case sig := <-ch: // continue
-		g.log.
-			WithField("signal", sig).
-			Info("Received execution signal.")
-	}
+	// Wait for signal (or cancellation), then trigger execution.
+	go func(ctx context.Context, sigs <-chan os.Signal) {
+		select {
+		case <-g.ctx.Done(): // abort
+			return
+		case sig := <-sigs: // continue
+			g.log.
+				WithField("signal", sig).
+				Info("Received execution signal.")
+		}
 
-	// Execute
-	g.Trigger()
+		// Execute
+		g.Trigger()
+	}(g.ctx, sigs)
 }
 
 func (g *Guillotine) execute() {
-	// Cancel listener context.
+	// Cancel listener context; stop all goroutines that are waiting to trigger
+	// the Guillotine.
 	g.cancel()
 
-	// Run finalizers.
+	// Run finalizers in reverse order.
 	g.log.Info("Running finalizers...")
 	for i := len(g.finalizers) - 1; i >= 0; i-- {
 		if finErr := g.finalizers[i](); finErr != nil {
@@ -61,5 +65,5 @@ func (g *Guillotine) execute() {
 	}
 
 	// Signal execution completion.
-	g.done <- zero.Empty() // signal completion
+	g.done <- zero.Empty()
 }

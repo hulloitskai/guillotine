@@ -31,3 +31,23 @@ func WithErrorf(format string, args ...zero.Interface) Callback {
 		return errors.Newf(format, args...)
 	}
 }
+
+// WithFunc creates a Callback that runs an arbitrary function.
+func WithFunc(f func()) Callback {
+	return func(error) error {
+		f()
+		return nil
+	}
+}
+
+// WithEffect creates a Callback that runs a function that receives the
+// error created by the Finalizer, and returns nothing.
+//
+// It is intended for functions with side effects involving the error, like
+// logging functions, etc.
+func WithEffect(f func(error)) Callback {
+	return func(err error) error {
+		f(err)
+		return err
+	}
+}
