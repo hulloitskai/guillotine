@@ -22,7 +22,7 @@ func main() {
 	defer func() {
 		if errs := guillo.Execute(); len(errs) > 0 {
 			for _, err := range errs {
-				fmt.Fprintf(os.Stderr, "A finalizer failed: %v", err)
+				fmt.Fprintf(os.Stderr, "A finalizer failed: %v\n", err)
 			}
 			os.Exit(1)
 		}
@@ -61,9 +61,11 @@ func main() {
 	// Block thread while server runs; stops either when the Guillotine
 	// shuts down the server, or the server fails to start up.
 	fmt.Printf("Listening on port %d...\n", port)
-	if err := srv.ListenAndServe(); err != nil {
+	if err = srv.ListenAndServe(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
-			cmdutil.Errf("Error while starting server: %v", err)
+			cmdutil.Errf("Error while starting server: %v\n", err)
+			guillo.Execute()
+			os.Exit(2)
 		}
 	}
 }
