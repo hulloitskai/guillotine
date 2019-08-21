@@ -9,13 +9,6 @@ import (
 	"go.stevenxie.me/gopkg/zero"
 )
 
-// Execute runs each Finalizer in reverse order, and returns the resulting
-// errors.
-func (g *Guillotine) Execute() []error {
-	g.Trigger()
-	return g.Wait()
-}
-
 // Trigger triggers an asynchronous execution process which will run each
 // Finalizer in reverse order.
 //

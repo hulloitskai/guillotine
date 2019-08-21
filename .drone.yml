@@ -8,7 +8,7 @@ steps:
       revive_config: .revive.toml
     environment:
       CGO_ENABLED: '0'
-      GOPROXY: &goproxy https://goproxy.io
+      GOPROXY: https://proxy.golang.org
     volumes:
       - name: gopath
         path: /go
@@ -16,12 +16,9 @@ steps:
   - name: test
     image: golang:1.12
     commands: ["go test -race ./..."]
-    environment:
-      GOPROXY: *goproxy
     volumes:
       - name: gopath
         path: /go
-
 
 volumes:
   - name: gopath

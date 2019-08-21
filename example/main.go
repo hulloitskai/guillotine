@@ -20,7 +20,7 @@ func main() {
 
 	// Execute the guillotine before main finishes.
 	defer func() {
-		if errs := guillo.Execute(); len(errs) > 0 {
+		if ok, errs := guillo.Execute(); !ok {
 			for _, err := range errs {
 				fmt.Fprintf(os.Stderr, "A finalizer failed: %v\n", err)
 			}
