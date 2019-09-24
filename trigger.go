@@ -49,8 +49,12 @@ func (g *Guillotine) execute() {
 	g.cancel()
 
 	// Run finalizers in reverse order.
-	g.log.Info("Running finalizers...")
-	for i := len(g.finalizers) - 1; i >= 0; i-- {
+	count := len(g.finalizers)
+	g.log.
+		WithField("count", count).
+		Info("Running finalizers...")
+
+	for i := count - 1; i >= 0; i-- {
 		if finErr := g.finalizers[i](); finErr != nil {
 			g.log.WithError(finErr).Error("A finalizer failed.")
 			g.errors = append(g.errors, finErr)
