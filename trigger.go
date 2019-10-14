@@ -25,7 +25,7 @@ func (g *Guillotine) TriggerOnTerminate() {
 // (see g.Terminate).
 func (g *Guillotine) TriggerOnSignal(sig ...os.Signal) {
 	sigs := make(chan os.Signal)
-	go signal.Notify(sigs, sig...)
+	signal.Notify(sigs, sig...)
 
 	// Wait for signal (or cancellation), then trigger execution.
 	go func(ctx context.Context, sigs <-chan os.Signal) {
