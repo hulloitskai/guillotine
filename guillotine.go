@@ -6,25 +6,24 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
+	"go.stevenxie.me/gopkg/logutil"
 	"go.stevenxie.me/gopkg/zero"
 )
 
 // New creates a new Guillotine.
 func New(opts ...Option) *Guillotine {
 	cfg := Config{
-		Logger: zero.Logger(),
+		Logger: logutil.NoopEntry(),
 	}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Guillotine{
-		log: cfg.Logger,
-
 		ctx:    ctx,
 		cancel: cancel,
 		done:   make(chan zero.Struct, 1),
+		log:    logutil.AddComponent(cfg.Logger, (*Guillotine)(nil)),
 	}
 }
 
@@ -34,7 +33,7 @@ type (
 	Guillotine struct {
 		finalizers []Finalizer
 		errors     []error
-		log        logrus.FieldLogger
+		log        *logrus.Entry
 
 		ctx    context.Context
 		cancel context.CancelFunc

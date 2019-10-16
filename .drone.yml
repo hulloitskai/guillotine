@@ -8,13 +8,12 @@ steps:
       revive_config: .revive.toml
     environment:
       CGO_ENABLED: '0'
-      GOPROXY: https://proxy.golang.org
     volumes:
       - name: gopath
         path: /go
 
   - name: test
-    image: golang:1.12
+    image: golang:1.13
     commands: ["go test -race ./..."]
     volumes:
       - name: gopath
@@ -23,7 +22,3 @@ steps:
 volumes:
   - name: gopath
     temp: {}
-
-trigger:
-  event:
-    exclude: ["tag"]
