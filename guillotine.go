@@ -23,7 +23,7 @@ func New(opts ...Option) *Guillotine {
 		ctx:    ctx,
 		cancel: cancel,
 		done:   make(chan zero.Struct, 1),
-		log:    logutil.AddComponent(cfg.Logger, (*Guillotine)(nil)),
+		log:    logutil.WithSource(cfg.Logger, (*Guillotine)(nil)),
 	}
 }
 
